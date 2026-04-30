@@ -25,15 +25,23 @@ export interface BackendClient {
   // Browse mode: random voice intros for a community.
   listVoiceIntros(communitySlug: string): Promise<VoiceIntroSummary[]>;
 
-  // Send message (sender already authenticated).
+  // Resolve a 3-digit number to a userId within a community.
+  // Used for both send-message recipient validation and check-messages
+  // "authentication" (enter your own number).
+  resolveByAssignedNumber(args: {
+    communitySlug: string;
+    assignedNumber: number;
+  }): Promise<{ userId: string } | null>;
+
+  // Upload a recorded voice message.
   uploadMessage(args: {
     senderUserId: string;
-    recipientAssignedNumber: number;
+    recipientUserId: string;
     blob: Blob;
     durationSeconds: number;
   }): Promise<{ messageId: string }>;
 
-  // Check messages (recipient already authenticated via SMS OTP).
+  // Inbox: messages this user has received.
   fetchInbox(userId: string): Promise<MessageSummary[]>;
   markListened(messageId: string): Promise<void>;
 
