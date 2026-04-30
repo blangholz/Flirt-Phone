@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { getServerEnv } from '@/lib/env';
+import type { Database } from '@/lib/db/types';
 
 // Server-side Supabase client tied to the current request's cookies.
 // Use in Server Components, route handlers, and Server Actions.
@@ -9,7 +10,7 @@ export async function createSupabaseServerClient() {
   const env = getServerEnv();
   const cookieStore = await cookies();
 
-  return createServerClient(
+  return createServerClient<Database>(
     env.NEXT_PUBLIC_SUPABASE_URL,
     env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
