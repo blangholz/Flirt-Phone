@@ -143,7 +143,24 @@ export type Database = {
       matches: Table<MatchRow, MatchInsert, Partial<MatchRow>>;
     };
     Views: { [_ in never]: never };
-    Functions: { [_ in never]: never };
+    Functions: {
+      get_rolodex: {
+        Args: { community_slug: string };
+        Returns: {
+          user_id: string;
+          name: string | null;
+          photo_url: string | null;
+          age: number | null;
+          gender: string | null;
+          orientation: string | null;
+          location: string | null;
+          interests: string | null;
+          assigned_number: number | null;
+          voice_intro_audio_url: string | null;
+          voice_intro_question: string | null;
+        }[];
+      };
+    };
     Enums: {
       community_type: CommunityType;
       community_status: CommunityStatus;

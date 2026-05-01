@@ -2,13 +2,14 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import { getServerEnv } from '@/lib/env';
 
-// Refreshes the Supabase Auth session cookie on each request so that
-// Server Components and route handlers see a fresh admin session.
-// Required by @supabase/ssr — without this, expired sessions hang.
+// NJS 16 file convention: this used to be `middleware.ts`, renamed to
+// `proxy.ts` per the deprecation. Refreshes the Supabase Auth session
+// cookie on each request so Server Components and route handlers see a
+// fresh admin session. Required by @supabase/ssr.
 //
 // Skips Twilio webhooks (no admin session involved there) and static assets.
 // Falls through cleanly if env vars are missing (dev-time setup).
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
   let env;
