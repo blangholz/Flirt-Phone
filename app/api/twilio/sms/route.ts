@@ -21,6 +21,7 @@ import {
   advanceRegistration,
   isBareOptInKeyword,
   parseSlug,
+  startBareOptInRegistration,
   startRegistration,
   type CommunityRef,
 } from '@/lib/registration/fsm';
@@ -78,42 +79,63 @@ export async function POST(request: Request) {
     .limit(1)
     .maybeSingle();
 
-  // No in-progress session — try to interpret as a community slug.
+  // No in-progress session — first touch from this phone number.
   if (!existingUser) {
-    const outcome = startRegistration(body, () => null /* unused below */);
-    if (outcome.kind === 'unrecognized') {
-      // Bare opt-in keyword? FSM already returned the friendly prompt;
-      // skip the community lookup.
-      if (isBareOptInKeyword(body)) return reply(outcome.reply);
-
-      // Try the actual lookup with the parsed slug.
-      const slug = parseSlug(body);
-      if (slug) {
-        const { data: community } = await supabase
-          .from('communities')
-          .select('id, name, slug')
-          .eq('slug', slug)
-          .eq('status', 'active')
-          .maybeSingle();
-        if (community) {
-          const result = startRegistration(slug, () => community as CommunityRef);
-          if (result.kind === 'create_user') {
-            const insert: UserInsert = {
-              community_id: result.communityId,
-              phone_number: from,
-              status: 'registering',
-              registration_step: result.nextStep,
-              last_inbound_message_sid: messageSid,
-            };
-            await supabase.from('users').insert(insert);
-            return reply(result.reply);
-          }
-        }
+    // Bare opt-in keyword (FLIRT/JOIN/etc.) → drop them straight into the
+    // FSM at awaiting_name on the default active community. No community
+    // code required from the user.
+    if (isBareOptInKeyword(body)) {
+      const { data: defaultCommunity } = await supabase
+        .from('communities')
+        .select('id, name, slug')
+        .eq('status', 'active')
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      const outcome = startBareOptInRegistration(
+        (defaultCommunity ?? null) as CommunityRef | null,
+      );
+      if (outcome.kind === 'create_user') {
+        const insert: UserInsert = {
+          community_id: outcome.communityId,
+          phone_number: from,
+          status: 'registering',
+          registration_step: outcome.nextStep,
+          last_inbound_message_sid: messageSid,
+        };
+        await supabase.from('users').insert(insert);
       }
       return reply(outcome.reply);
     }
-    // Defensive — startRegistration only returns unrecognized | create_user
-    return reply('Something went wrong. Try again.');
+
+    // Slug-based path — body looks like a community slug or "<KW> <slug>".
+    const slug = parseSlug(body);
+    if (slug) {
+      const { data: community } = await supabase
+        .from('communities')
+        .select('id, name, slug')
+        .eq('slug', slug)
+        .eq('status', 'active')
+        .maybeSingle();
+      if (community) {
+        const result = startRegistration(slug, () => community as CommunityRef);
+        if (result.kind === 'create_user') {
+          const insert: UserInsert = {
+            community_id: result.communityId,
+            phone_number: from,
+            status: 'registering',
+            registration_step: result.nextStep,
+            last_inbound_message_sid: messageSid,
+          };
+          await supabase.from('users').insert(insert);
+          return reply(result.reply);
+        }
+      }
+    }
+
+    // Couldn't resolve — return the FSM's catch-all message.
+    const fallback = startRegistration(body, () => null);
+    return reply(fallback.reply);
   }
 
   // Continuing session — advance the FSM.

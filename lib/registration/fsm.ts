@@ -25,7 +25,8 @@ export interface CommunityRef {
 // ---------------------------------------------------------------------------
 // Outcomes — what the orchestrator should do next
 
-export type RegistrationOutcome =
+// First-touch outcomes (returned by startRegistration / startBareOptInRegistration).
+export type FirstTouchOutcome =
   | {
       kind: 'unrecognized';
       reply: string;
@@ -35,7 +36,10 @@ export type RegistrationOutcome =
       communityId: string;
       reply: string;
       nextStep: RegistrationStep;
-    }
+    };
+
+export type RegistrationOutcome =
+  | FirstTouchOutcome
   | {
       kind: 'update_user';
       userId: string;
@@ -66,25 +70,51 @@ export type UserUpdate = Partial<
 // ---------------------------------------------------------------------------
 // Public API
 
-// First-touch case: phone number has no in-progress registration.
-// We try to interpret the body as a community slug.
-export function startRegistration(
-  body: string,
-  resolveCommunity: (slug: string) => CommunityRef | null,
-): RegistrationOutcome {
-  // Bare opt-in keyword (e.g. user texts just "FLIRT") — they want to
-  // sign up but haven't given a community code yet. This is the canonical
-  // A2P 10DLC opt-in confirmation: must include brand, recurring-message
-  // disclosure, msg&data rates, HELP, STOP. Mirrors the Opt-in Message
-  // submitted on the Twilio campaign.
-  if (isBareOptInKeyword(body)) {
+// Canonical A2P 10DLC opt-in reply. Sent verbatim when a user texts a
+// bare opt-in keyword (FLIRT/JOIN/etc.). Must match the Opt-in Message
+// submitted on the Twilio campaign. Carrier-required elements: brand,
+// recurring-message disclosure, msg freq, msg&data rates, HELP, STOP.
+export const BARE_OPT_IN_REPLY =
+  "FlirtPhone: You've been added! You're opted in to recurring SMS — " +
+  'msg freq varies, msg&data rates may apply. Reply HELP for help, ' +
+  'STOP to cancel. Reply with your first name to join.';
+
+// Bare opt-in path: user texted just FLIRT/JOIN/etc. They've consented;
+// drop them straight into the registration flow on the supplied community
+// (typically the only/default active community for this Twilio number).
+// If no community is available, surface that as an unrecognized outcome.
+export function startBareOptInRegistration(
+  community: CommunityRef | null,
+): FirstTouchOutcome {
+  if (!community) {
     return {
       kind: 'unrecognized',
       reply:
-        "FlirtPhone: You've been spotted with a Flirt! You're opted in " +
-        'to recurring SMS for signup, message alerts & match ' +
-        'notifications. Msg freq varies. Msg&data rates may apply. ' +
-        'Reply HELP for help, STOP to cancel.',
+        'FlirtPhone: No active communities yet — please try again later, ' +
+        'or contact your host.',
+    };
+  }
+  return {
+    kind: 'create_user',
+    communityId: community.id,
+    reply: BARE_OPT_IN_REPLY,
+    nextStep: 'awaiting_name',
+  };
+}
+
+// Slug-based first touch: phone number has no in-progress registration
+// and the body looks like (or was prefixed with) a community slug.
+export function startRegistration(
+  body: string,
+  resolveCommunity: (slug: string) => CommunityRef | null,
+): FirstTouchOutcome {
+  // Bare opt-in keywords are handled by startBareOptInRegistration. If
+  // we're called with one here, fall through to the catch-all prompt
+  // (callers should route to startBareOptInRegistration first).
+  if (isBareOptInKeyword(body)) {
+    return {
+      kind: 'unrecognized',
+      reply: BARE_OPT_IN_REPLY,
     };
   }
 

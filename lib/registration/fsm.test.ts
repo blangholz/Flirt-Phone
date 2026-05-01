@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { UserRow } from '@/lib/db/types';
 import {
   advanceRegistration,
+  startBareOptInRegistration,
   startRegistration,
   type CommunityRef,
 } from './fsm';
@@ -69,19 +70,6 @@ describe('startRegistration', () => {
     );
   });
 
-  it('treats bare FLIRT as an opt-in with a brand-warm welcome', () => {
-    const result = startRegistration('FLIRT', resolveCommunity);
-    expect(result.kind).toBe('unrecognized');
-    const reply = result.kind === 'unrecognized' ? result.reply : '';
-    expect(reply).toMatch(/spotted with a Flirt/i);
-    // A2P 10DLC compliance: brand + recurring + HELP + STOP + msg&data.
-    expect(reply).toMatch(/FlirtPhone/);
-    expect(reply).toMatch(/recurring/i);
-    expect(reply).toMatch(/HELP/);
-    expect(reply).toMatch(/STOP/);
-    expect(reply).toMatch(/msg.*data rates/i);
-  });
-
   it('compliance disclosure is included in the welcome after a slug', () => {
     const result = startRegistration('test-studio', resolveCommunity);
     expect(result.kind).toBe('create_user');
@@ -90,15 +78,41 @@ describe('startRegistration', () => {
     expect(reply).toMatch(/STOP/);
     expect(reply).toMatch(/msg.*data rates/i);
   });
+});
 
-  it('treats bare JOIN/HELLO/HI/SIGNUP the same way', () => {
-    for (const kw of ['JOIN', 'hello', 'hi', 'SignUp']) {
-      const result = startRegistration(kw, resolveCommunity);
-      expect(result.kind).toBe('unrecognized');
-      expect(result.kind === 'unrecognized' && result.reply).toMatch(
-        /spotted with a Flirt/i,
-      );
-    }
+// ---------------------------------------------------------------------------
+
+describe('startBareOptInRegistration', () => {
+  it('drops the user into awaiting_name on the default community', () => {
+    const result = startBareOptInRegistration(community);
+    expect(result).toMatchObject({
+      kind: 'create_user',
+      communityId: 'comm-1',
+      nextStep: 'awaiting_name',
+    });
+  });
+
+  it('reply contains the carrier-required disclosures and the first-name CTA', () => {
+    const result = startBareOptInRegistration(community);
+    const reply = result.kind === 'create_user' ? result.reply : '';
+    expect(reply).toMatch(/FlirtPhone/);
+    expect(reply).toMatch(/added/i);
+    expect(reply).toMatch(/recurring/i);
+    expect(reply).toMatch(/HELP/);
+    expect(reply).toMatch(/STOP/);
+    expect(reply).toMatch(/msg.*data rates/i);
+    expect(reply).toMatch(/first name/i);
+    // We deliberately don't include the community name in the bare-flow
+    // reply — confirm that.
+    expect(reply).not.toMatch(/Test Studio/);
+  });
+
+  it('returns unrecognized when no community is available', () => {
+    const result = startBareOptInRegistration(null);
+    expect(result.kind).toBe('unrecognized');
+    expect(result.kind === 'unrecognized' && result.reply).toMatch(
+      /no active communities/i,
+    );
   });
 
   it('returns unrecognized for arbitrary text', () => {
