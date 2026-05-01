@@ -76,16 +76,18 @@ otp_expiry = 3600
 subject = "Your FlirtPhone sign-in link"
 content_path = "./supabase/templates/magic_link.html"
 
-# SMTP via Resend (optional). Uncomment + add RESEND_API_KEY if Supabase's
-# built-in email throttling becomes an issue at scale.
-# [auth.email.smtp]
-# enabled = true
-# host = "smtp.resend.com"
-# port = 465
-# user = "resend"
-# pass = "env(RESEND_API_KEY)"
-# admin_email = "auth@CHANGE_ME.com"
-# sender_name = "FlirtPhone"
+# SMTP via Resend — replaces Supabase's rate-limited built-in email.
+# RESEND_API_KEY is read from the shell at `supabase config push` time.
+# Sender uses Resend's default onboarding domain until a custom domain
+# is verified on Resend (see https://resend.com/domains).
+[auth.email.smtp]
+enabled = true
+host = "smtp.resend.com"
+port = 465
+user = "resend"
+pass = "env(RESEND_API_KEY)"
+admin_email = "onboarding@resend.dev"
+sender_name = "FlirtPhone"
 
 [edge_runtime]
 enabled = true

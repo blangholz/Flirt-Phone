@@ -25,6 +25,7 @@ import {
   type CommunityRef,
 } from '@/lib/registration/fsm';
 import { fetchAndUploadPhoto } from '@/lib/registration/photo-upload';
+import { placeVoiceIntroCall } from '@/lib/registration/place-intro-call';
 import type { UserInsert } from '@/lib/db/types';
 
 export async function POST(request: Request) {
@@ -149,6 +150,25 @@ export async function POST(request: Request) {
           `Couldn't save your photo (${
             err instanceof Error ? err.message : 'unknown error'
           }). Try sending it again.`,
+        );
+      }
+    }
+
+    // If FSM advanced to call_pending, place the outbound call BEFORE
+    // committing the state change. Failure → keep user on
+    // awaiting_call_consent so they can reply YES to retry.
+    if (outcome.nextStep === 'call_pending') {
+      try {
+        await placeVoiceIntroCall({
+          userId: existingUser.id,
+          toNumber: existingUser.phone_number,
+        });
+      } catch (err) {
+        await supabase.from('users').update(updates).eq('id', existingUser.id);
+        return reply(
+          `Couldn't reach you for the call (${
+            err instanceof Error ? err.message : 'unknown error'
+          }). Reply YES to try again.`,
         );
       }
     }

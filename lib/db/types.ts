@@ -173,6 +173,10 @@ export type Database = {
           voice_intro_question: string | null;
         }[];
       };
+      complete_registration: {
+        Args: { p_user_id: string };
+        Returns: number; // assigned 3-digit number
+      };
     };
     Enums: {
       community_type: CommunityType;
