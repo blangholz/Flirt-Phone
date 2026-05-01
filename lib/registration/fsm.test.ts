@@ -60,6 +60,33 @@ describe('startRegistration', () => {
     );
   });
 
+  it('accepts "FLIRT <slug>" form (the Twilio campaign keyword)', () => {
+    expect(startRegistration('FLIRT test-studio', resolveCommunity).kind).toBe(
+      'create_user',
+    );
+    expect(startRegistration('flirt test-studio', resolveCommunity).kind).toBe(
+      'create_user',
+    );
+  });
+
+  it('treats bare FLIRT as an opt-in request and asks for community code', () => {
+    const result = startRegistration('FLIRT', resolveCommunity);
+    expect(result.kind).toBe('unrecognized');
+    expect(result.kind === 'unrecognized' && result.reply).toMatch(
+      /community code/i,
+    );
+  });
+
+  it('treats bare JOIN/HELLO/HI/SIGNUP the same way', () => {
+    for (const kw of ['JOIN', 'hello', 'hi', 'SignUp']) {
+      const result = startRegistration(kw, resolveCommunity);
+      expect(result.kind).toBe('unrecognized');
+      expect(result.kind === 'unrecognized' && result.reply).toMatch(
+        /community code/i,
+      );
+    }
+  });
+
   it('returns unrecognized for arbitrary text', () => {
     expect(startRegistration('hello?', resolveCommunity).kind).toBe('unrecognized');
   });

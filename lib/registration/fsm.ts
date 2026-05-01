@@ -72,6 +72,18 @@ export function startRegistration(
   body: string,
   resolveCommunity: (slug: string) => CommunityRef | null,
 ): RegistrationOutcome {
+  // Bare opt-in keyword (e.g. user texts just "FLIRT") — they want to
+  // sign up but haven't given a community code yet. Don't try to look
+  // up a community called "flirt"; ask for the code instead.
+  if (isBareOptInKeyword(body)) {
+    return {
+      kind: 'unrecognized',
+      reply:
+        "Welcome to FlirtPhone! Reply with your community code to sign up " +
+        "(e.g., 'brooklyn-yoga'). Your host gave you one.",
+    };
+  }
+
   const slug = parseSlug(body);
   if (!slug) {
     return {
@@ -260,12 +272,22 @@ export function advanceRegistration(
 // ---------------------------------------------------------------------------
 // Helpers
 
-function parseSlug(body: string): string | null {
-  // Accept either "brooklyn-yoga" or "START brooklyn-yoga" (case-insensitive START).
+// Opt-in keywords advertised on the Twilio campaign / community signage.
+// Sent alone they trigger a "what community?" prompt; sent as a prefix
+// (e.g. "FLIRT brooklyn-yoga") they're stripped before slug parsing.
+const OPT_IN_KEYWORD_PATTERN = /^(flirt|join|start|signup|hello|hi)$/i;
+const OPT_IN_PREFIX_PATTERN = /^(flirt|join|start|signup|hello|hi)\s+/i;
+
+export function isBareOptInKeyword(body: string): boolean {
+  return OPT_IN_KEYWORD_PATTERN.test(body.trim());
+}
+
+export function parseSlug(body: string): string | null {
+  // Accept "brooklyn-yoga" or "<KEYWORD> brooklyn-yoga" (case-insensitive).
   const cleaned = body
     .trim()
-    .toLowerCase()
-    .replace(/^start\s+/i, '');
+    .replace(OPT_IN_PREFIX_PATTERN, '')
+    .toLowerCase();
   if (!/^[a-z0-9][a-z0-9-]{1,62}[a-z0-9]$/.test(cleaned)) return null;
   return cleaned;
 }

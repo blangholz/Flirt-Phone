@@ -19,6 +19,8 @@ import {
 } from '@/lib/twilio';
 import {
   advanceRegistration,
+  isBareOptInKeyword,
+  parseSlug,
   startRegistration,
   type CommunityRef,
 } from '@/lib/registration/fsm';
@@ -45,6 +47,24 @@ export async function POST(request: Request) {
     return new Response('Missing required fields', { status: 400 });
   }
 
+  // CTIA / A2P 10DLC compliance: STOP and HELP must be answered, even if
+  // the user has no in-progress registration. Twilio's Advanced Opt-Out
+  // typically intercepts these at the Messaging Service level, but we
+  // respond here as a backstop so the campaign passes carrier review even
+  // if that feature isn't configured on the Messaging Service.
+  if (/^(stop|stopall|unsubscribe|cancel|end|quit)$/i.test(body)) {
+    return reply(
+      'FlirtPhone: You have been unsubscribed and will receive no more ' +
+        'messages. Reply START to resubscribe.',
+    );
+  }
+  if (/^(help|info)$/i.test(body)) {
+    return reply(
+      'FlirtPhone: voice-first community dating. Msg&data rates may apply. ' +
+        'Reply STOP to unsubscribe. Support: blangholz@gmail.com',
+    );
+  }
+
   const supabase = createSupabaseAdminClient();
 
   // Find an in-progress registration for this number.
@@ -61,8 +81,12 @@ export async function POST(request: Request) {
   if (!existingUser) {
     const outcome = startRegistration(body, () => null /* unused below */);
     if (outcome.kind === 'unrecognized') {
+      // Bare opt-in keyword? FSM already returned the friendly prompt;
+      // skip the community lookup.
+      if (isBareOptInKeyword(body)) return reply(outcome.reply);
+
       // Try the actual lookup with the parsed slug.
-      const slug = parseSlugLoose(body);
+      const slug = parseSlug(body);
       if (slug) {
         const { data: community } = await supabase
           .from('communities')
@@ -150,9 +174,4 @@ function reply(message: string): Response {
   const twiml = newMessagingResponse();
   twiml.message(message);
   return twimlResponse(twiml);
-}
-
-function parseSlugLoose(body: string): string | null {
-  const cleaned = body.trim().toLowerCase().replace(/^start\s+/i, '');
-  return /^[a-z0-9][a-z0-9-]{1,62}[a-z0-9]$/.test(cleaned) ? cleaned : null;
 }
