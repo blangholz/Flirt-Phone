@@ -7,6 +7,17 @@ export type CommunityType = 'ongoing' | 'temporary';
 export type CommunityStatus = 'active' | 'dormant' | 'closed';
 export type UserStatus = 'registering' | 'active' | 'dormant';
 export type QuestionSource = 'admin_approved' | 'admin_added';
+export type RegistrationStep =
+  | 'awaiting_name'
+  | 'awaiting_age'
+  | 'awaiting_gender'
+  | 'awaiting_orientation'
+  | 'awaiting_location'
+  | 'awaiting_interests'
+  | 'awaiting_photo'
+  | 'awaiting_call_consent'
+  | 'call_pending'
+  | 'complete';
 
 // --- Row shapes (what comes out of SELECT) ---
 
@@ -47,6 +58,8 @@ export type UserRow = {
   interests: string | null;
   assigned_number: number | null; // 100-999
   status: UserStatus;
+  registration_step: RegistrationStep;
+  last_inbound_message_sid: string | null;
   created_at: string;
 };
 
@@ -166,6 +179,7 @@ export type Database = {
       community_status: CommunityStatus;
       user_status: UserStatus;
       question_source: QuestionSource;
+      registration_step: RegistrationStep;
     };
     CompositeTypes: { [_ in never]: never };
   };
