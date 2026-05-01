@@ -81,8 +81,8 @@ export async function generateQuestions(
 }
 
 // Tolerant parser — accepts either {"questions": [...]} or a bare JSON array,
-// trims fences/prose if Claude leaks them.
-function parseQuestionsJson(text: string): string[] {
+// trims fences/prose if Claude leaks them. Exported for unit testing.
+export function parseQuestionsJson(text: string): string[] {
   const trimmed = text.trim().replace(/^```(?:json)?\n?|\n?```$/g, '').trim();
   let value: unknown;
   try {

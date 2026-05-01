@@ -6,15 +6,21 @@
 //
 // Spec refs: PDK §5.2 (intro recording), §7 (phone interface), Architect §5.3, §5.4.
 
-export async function POST(_request: Request) {
-  // Stub: respond with TwiML that hangs up.
-  const twiml = `<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  <Say>FlirtPhone is not yet available. Please try again later.</Say>
-  <Hangup/>
-</Response>`;
-  return new Response(twiml, {
-    status: 200,
-    headers: { 'Content-Type': 'text/xml' },
-  });
+import {
+  newVoiceResponse,
+  parseAndValidateTwilioWebhook,
+  twimlResponse,
+} from '@/lib/twilio';
+
+export async function POST(request: Request) {
+  const params = await parseAndValidateTwilioWebhook(request);
+  if (!params) {
+    return new Response('Invalid signature', { status: 403 });
+  }
+
+  // Stub — TwiML that hangs up. Actual logic in Milestones 4 + 7.
+  const twiml = newVoiceResponse();
+  twiml.say('FlirtPhone is not yet available. Please try again later.');
+  twiml.hangup();
+  return twimlResponse(twiml);
 }
