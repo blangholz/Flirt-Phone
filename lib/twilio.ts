@@ -32,7 +32,12 @@ export async function parseAndValidateTwilioWebhook(
   request: Request,
 ): Promise<Record<string, string> | null> {
   const signature = request.headers.get('x-twilio-signature');
-  const formData = await request.formData();
+  let formData: FormData;
+  try {
+    formData = await request.formData();
+  } catch {
+    return null; // malformed / empty body — treat as invalid
+  }
   const params: Record<string, string> = {};
   formData.forEach((value, key) => {
     params[key] = typeof value === 'string' ? value : value.name;
