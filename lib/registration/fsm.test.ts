@@ -72,9 +72,23 @@ describe('startRegistration', () => {
   it('treats bare FLIRT as an opt-in request and asks for community code', () => {
     const result = startRegistration('FLIRT', resolveCommunity);
     expect(result.kind).toBe('unrecognized');
-    expect(result.kind === 'unrecognized' && result.reply).toMatch(
-      /community code/i,
-    );
+    const reply = result.kind === 'unrecognized' ? result.reply : '';
+    expect(reply).toMatch(/community code/i);
+    // A2P 10DLC compliance: brand + recurring + HELP + STOP + msg&data.
+    expect(reply).toMatch(/FlirtPhone/);
+    expect(reply).toMatch(/recurring/i);
+    expect(reply).toMatch(/HELP/);
+    expect(reply).toMatch(/STOP/);
+    expect(reply).toMatch(/msg.*data rates/i);
+  });
+
+  it('compliance disclosure is included in the welcome after a slug', () => {
+    const result = startRegistration('test-studio', resolveCommunity);
+    expect(result.kind).toBe('create_user');
+    const reply = result.kind === 'create_user' ? result.reply : '';
+    expect(reply).toMatch(/HELP/);
+    expect(reply).toMatch(/STOP/);
+    expect(reply).toMatch(/msg.*data rates/i);
   });
 
   it('treats bare JOIN/HELLO/HI/SIGNUP the same way', () => {

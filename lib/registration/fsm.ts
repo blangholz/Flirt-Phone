@@ -73,14 +73,18 @@ export function startRegistration(
   resolveCommunity: (slug: string) => CommunityRef | null,
 ): RegistrationOutcome {
   // Bare opt-in keyword (e.g. user texts just "FLIRT") — they want to
-  // sign up but haven't given a community code yet. Don't try to look
-  // up a community called "flirt"; ask for the code instead.
+  // sign up but haven't given a community code yet. This is the canonical
+  // A2P 10DLC opt-in confirmation: must include brand, recurring-message
+  // disclosure, msg&data rates, HELP, STOP. Mirrors the Opt-in Message
+  // submitted on the Twilio campaign.
   if (isBareOptInKeyword(body)) {
     return {
       kind: 'unrecognized',
       reply:
-        "Welcome to FlirtPhone! Reply with your community code to sign up " +
-        "(e.g., 'brooklyn-yoga'). Your host gave you one.",
+        "FlirtPhone: You're opted in to recurring SMS for community " +
+        'signup, message alerts & match notifications. Msg freq varies. ' +
+        'Msg&data rates may apply. Reply HELP for help, STOP to cancel. ' +
+        "Reply with your community code (e.g. 'brooklyn-yoga').",
     };
   }
 
@@ -103,7 +107,11 @@ export function startRegistration(
   return {
     kind: 'create_user',
     communityId: community.id,
-    reply: `Welcome to ${community.name}! Let's get you on the Rolodex. What's your first name?`,
+    // First message after opt-in via slug → include compliance disclosure.
+    reply:
+      `FlirtPhone: Welcome to ${community.name}! You're opted in to ` +
+      'recurring SMS — msg freq varies, msg&data rates may apply, reply ' +
+      "HELP for help or STOP to cancel. What's your first name?",
     nextStep: 'awaiting_name',
   };
 }
