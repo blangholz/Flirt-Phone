@@ -43,10 +43,10 @@ file_size_limit = "50MiB"
 [auth]
 enabled = true
 # Update these to match your deployment after first Vercel deploy.
-site_url = "https://CHANGE_ME.vercel.app"
+site_url = "https://project-qmhiq.vercel.app"
 additional_redirect_urls = [
-  "https://CHANGE_ME.vercel.app",
-  "https://CHANGE_ME.vercel.app/",
+  "https://project-qmhiq.vercel.app",
+  "https://project-qmhiq.vercel.app/",
   "http://localhost:3000",
   "http://127.0.0.1:3000",
 ]

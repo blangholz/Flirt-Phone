@@ -1,11 +1,11 @@
 import twilio, { twiml as TwilioTwiml } from 'twilio';
-import { getServerEnv } from '@/lib/env';
+import { requireTwilio } from '@/lib/env';
 
 let cachedClient: ReturnType<typeof twilio> | null = null;
 
 export function getTwilioClient() {
   if (cachedClient) return cachedClient;
-  const env = getServerEnv();
+  const env = requireTwilio();
   cachedClient = twilio(env.TWILIO_ACCOUNT_SID, env.TWILIO_AUTH_TOKEN);
   return cachedClient;
 }
@@ -18,7 +18,7 @@ export function validateTwilioSignature(
   params: Record<string, string>,
 ): boolean {
   if (!signature) return false;
-  const env = getServerEnv();
+  const env = requireTwilio();
   return twilio.validateRequest(env.TWILIO_AUTH_TOKEN, signature, url, params);
 }
 

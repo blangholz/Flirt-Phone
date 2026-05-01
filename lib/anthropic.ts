@@ -1,11 +1,11 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { getServerEnv } from '@/lib/env';
+import { requireAnthropic } from '@/lib/env';
 
 let cachedClient: Anthropic | null = null;
 
 export function getAnthropicClient() {
   if (cachedClient) return cachedClient;
-  const env = getServerEnv();
+  const env = requireAnthropic();
   cachedClient = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
   return cachedClient;
 }

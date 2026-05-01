@@ -23,6 +23,7 @@
 .pnpm-debug.log*
 .vercel
 .vercel/
+supabase/.temp/
 .yarn/*
 /.next/
 /.pnp
