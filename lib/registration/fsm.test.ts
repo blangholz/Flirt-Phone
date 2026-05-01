@@ -69,11 +69,11 @@ describe('startRegistration', () => {
     );
   });
 
-  it('treats bare FLIRT as an opt-in request and asks for community code', () => {
+  it('treats bare FLIRT as an opt-in with a brand-warm welcome', () => {
     const result = startRegistration('FLIRT', resolveCommunity);
     expect(result.kind).toBe('unrecognized');
     const reply = result.kind === 'unrecognized' ? result.reply : '';
-    expect(reply).toMatch(/community code/i);
+    expect(reply).toMatch(/spotted with a Flirt/i);
     // A2P 10DLC compliance: brand + recurring + HELP + STOP + msg&data.
     expect(reply).toMatch(/FlirtPhone/);
     expect(reply).toMatch(/recurring/i);
@@ -96,7 +96,7 @@ describe('startRegistration', () => {
       const result = startRegistration(kw, resolveCommunity);
       expect(result.kind).toBe('unrecognized');
       expect(result.kind === 'unrecognized' && result.reply).toMatch(
-        /community code/i,
+        /spotted with a Flirt/i,
       );
     }
   });

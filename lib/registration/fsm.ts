@@ -81,10 +81,10 @@ export function startRegistration(
     return {
       kind: 'unrecognized',
       reply:
-        "FlirtPhone: You're opted in to recurring SMS for community " +
-        'signup, message alerts & match notifications. Msg freq varies. ' +
-        'Msg&data rates may apply. Reply HELP for help, STOP to cancel. ' +
-        "Reply with your community code (e.g. 'brooklyn-yoga').",
+        "FlirtPhone: You've been spotted with a Flirt! You're opted in " +
+        'to recurring SMS for signup, message alerts & match ' +
+        'notifications. Msg freq varies. Msg&data rates may apply. ' +
+        'Reply HELP for help, STOP to cancel.',
     };
   }
 
