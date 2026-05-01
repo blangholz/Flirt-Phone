@@ -10,13 +10,18 @@ export type QuestionSource = 'admin_approved' | 'admin_added';
 
 // --- Row shapes (what comes out of SELECT) ---
 
-export interface AdminRow {
+// Note: these are `type` aliases (not interfaces). TypeScript's
+// `extends Record<string, unknown>` check is stricter for interfaces
+// (which can be augmented), so postgrest-js's GenericTable contract
+// would resolve to `never` if we used interface here. Don't switch.
+
+export type AdminRow = {
   id: string;
   email: string;
   created_at: string;
-}
+};
 
-export interface CommunityRow {
+export type CommunityRow = {
   id: string;
   name: string;
   slug: string;
@@ -27,9 +32,9 @@ export interface CommunityRow {
   refresh_cadence: string | null; // postgres interval, e.g. "1 mon"
   owner_admin_id: string;
   created_at: string;
-}
+};
 
-export interface UserRow {
+export type UserRow = {
   id: string;
   community_id: string;
   phone_number: string; // E.164
@@ -43,25 +48,25 @@ export interface UserRow {
   assigned_number: number | null; // 100-999
   status: UserStatus;
   created_at: string;
-}
+};
 
-export interface QuestionRow {
+export type QuestionRow = {
   id: string;
   community_id: string;
   question_text: string;
   source: QuestionSource;
   created_at: string;
-}
+};
 
-export interface VoiceIntroRow {
+export type VoiceIntroRow = {
   user_id: string; // PK — one current intro per user
   question_id: string;
   audio_url: string;
   duration_seconds: number;
   recorded_at: string;
-}
+};
 
-export interface MessageRow {
+export type MessageRow = {
   id: string;
   sender_user_id: string;
   recipient_user_id: string;
@@ -70,25 +75,25 @@ export interface MessageRow {
   sent_at: string;
   listened_at: string | null;
   listened_count: number;
-}
+};
 
-export interface ResponseRow {
+export type ResponseRow = {
   id: string;
   message_id: string;
   responder_user_id: string;
   audio_url: string;
   duration_seconds: number;
   recorded_at: string;
-}
+};
 
-export interface MatchRow {
+export type MatchRow = {
   id: string;
   community_id: string;
   user_a_id: string; // canonical: user_a_id < user_b_id
   user_b_id: string;
   triggering_message_id: string;
   matched_at: string;
-}
+};
 
 // --- Insert shapes (PK + defaultable fields optional) ---
 
@@ -116,25 +121,35 @@ export type MatchInsert = Pick<MatchRow, 'community_id' | 'user_a_id' | 'user_b_
   Partial<Pick<MatchRow, 'id' | 'matched_at'>>;
 
 // --- Database shape for createClient<Database>() / createServerClient<Database>() ---
+//
+// Each Tables entry needs Relationships: [] to satisfy postgrest-js's
+// GenericTable contract; Views and Functions can be empty placeholders.
 
-export interface Database {
+type Table<R, I, U> = { Row: R; Insert: I; Update: U; Relationships: [] };
+
+export type Database = {
+  __InternalSupabase: {
+    PostgrestVersion: '12';
+  };
   public: {
     Tables: {
-      admins: { Row: AdminRow; Insert: AdminInsert; Update: Partial<AdminRow> };
-      communities: { Row: CommunityRow; Insert: CommunityInsert; Update: Partial<CommunityRow> };
-      users: { Row: UserRow; Insert: UserInsert; Update: Partial<UserRow> };
-      questions: { Row: QuestionRow; Insert: QuestionInsert; Update: Partial<QuestionRow> };
-      voice_intros: { Row: VoiceIntroRow; Insert: VoiceIntroInsert; Update: Partial<VoiceIntroRow> };
-      messages: { Row: MessageRow; Insert: MessageInsert; Update: Partial<MessageRow> };
-      responses: { Row: ResponseRow; Insert: ResponseInsert; Update: Partial<ResponseRow> };
-      matches: { Row: MatchRow; Insert: MatchInsert; Update: Partial<MatchRow> };
+      admins: Table<AdminRow, AdminInsert, Partial<AdminRow>>;
+      communities: Table<CommunityRow, CommunityInsert, Partial<CommunityRow>>;
+      users: Table<UserRow, UserInsert, Partial<UserRow>>;
+      questions: Table<QuestionRow, QuestionInsert, Partial<QuestionRow>>;
+      voice_intros: Table<VoiceIntroRow, VoiceIntroInsert, Partial<VoiceIntroRow>>;
+      messages: Table<MessageRow, MessageInsert, Partial<MessageRow>>;
+      responses: Table<ResponseRow, ResponseInsert, Partial<ResponseRow>>;
+      matches: Table<MatchRow, MatchInsert, Partial<MatchRow>>;
     };
+    Views: { [_ in never]: never };
+    Functions: { [_ in never]: never };
     Enums: {
       community_type: CommunityType;
       community_status: CommunityStatus;
       user_status: UserStatus;
       question_source: QuestionSource;
     };
-    Functions: Record<string, never>;
+    CompositeTypes: { [_ in never]: never };
   };
-}
+};
