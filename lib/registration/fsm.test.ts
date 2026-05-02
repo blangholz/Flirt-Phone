@@ -92,19 +92,17 @@ describe('startBareOptInRegistration', () => {
     });
   });
 
-  it('reply contains the carrier-required disclosures and the first-name CTA', () => {
+  it('reply contains the community name, carrier disclosures, and first-name CTA', () => {
     const result = startBareOptInRegistration(community);
     const reply = result.kind === 'create_user' ? result.reply : '';
     expect(reply).toMatch(/FlirtPhone/);
+    expect(reply).toMatch(/Test Studio/); // community name templated in
     expect(reply).toMatch(/added/i);
     expect(reply).toMatch(/recurring/i);
     expect(reply).toMatch(/HELP/);
     expect(reply).toMatch(/STOP/);
     expect(reply).toMatch(/msg.*data rates/i);
     expect(reply).toMatch(/first name/i);
-    // We deliberately don't include the community name in the bare-flow
-    // reply — confirm that.
-    expect(reply).not.toMatch(/Test Studio/);
   });
 
   it('returns unrecognized when no community is available', () => {

@@ -74,10 +74,14 @@ export type UserUpdate = Partial<
 // bare opt-in keyword (FLIRT/JOIN/etc.). Must match the Opt-in Message
 // submitted on the Twilio campaign. Carrier-required elements: brand,
 // recurring-message disclosure, msg freq, msg&data rates, HELP, STOP.
-export const BARE_OPT_IN_REPLY =
-  "You've been added to the FlirtPhone! You're opted in to recurring " +
-  'SMS — msg freq varies, msg&data rates may apply. Reply HELP for ' +
-  'help, STOP to cancel. Reply with your first name to join.';
+export function bareOptInReply(communityName: string): string {
+  return (
+    `You've been added to the ${communityName} FlirtPhone! You're ` +
+    'opted in to recurring SMS — msg freq varies, msg&data rates may ' +
+    'apply. Reply HELP for help, STOP to cancel. Reply with your first ' +
+    'name to join.'
+  );
+}
 
 // Bare opt-in path: user texted just FLIRT/JOIN/etc. They've consented;
 // drop them straight into the registration flow on the supplied community
@@ -97,7 +101,7 @@ export function startBareOptInRegistration(
   return {
     kind: 'create_user',
     communityId: community.id,
-    reply: BARE_OPT_IN_REPLY,
+    reply: bareOptInReply(community.name),
     nextStep: 'awaiting_name',
   };
 }
@@ -114,7 +118,9 @@ export function startRegistration(
   if (isBareOptInKeyword(body)) {
     return {
       kind: 'unrecognized',
-      reply: BARE_OPT_IN_REPLY,
+      reply:
+        'No active communities yet — please try again later, or ' +
+        'contact your host.',
     };
   }
 
