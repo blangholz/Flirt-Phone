@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -10,9 +11,9 @@ export default function TermsPage() {
     <main className="min-h-screen">
       <div className="max-w-2xl mx-auto px-6 py-16">
         <p className="text-sm text-stone-500">
-          <a className="underline hover:text-stone-900" href="/">
+          <Link className="underline hover:text-stone-900" href="/">
             ← FlirtPhone
-          </a>
+          </Link>
         </p>
 
         <h1 className="mt-8 text-3xl font-bold tracking-tight">
@@ -131,9 +132,9 @@ export default function TermsPage() {
             <p className="mt-2">
               Your phone number and the contents of your messages are handled
               under our{' '}
-              <a className="underline hover:text-stone-900" href="/privacy">
+              <Link className="underline hover:text-stone-900" href="/privacy">
                 Privacy Policy
-              </a>
+              </Link>
               . We do not sell, rent, or share your phone number with third
               parties for marketing purposes.
             </p>

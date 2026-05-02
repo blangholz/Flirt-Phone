@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -10,9 +11,9 @@ export default function PrivacyPage() {
     <main className="min-h-screen">
       <div className="max-w-2xl mx-auto px-6 py-16">
         <p className="text-sm text-stone-500">
-          <a className="underline hover:text-stone-900" href="/">
+          <Link className="underline hover:text-stone-900" href="/">
             ← FlirtPhone
-          </a>
+          </Link>
         </p>
 
         <h1 className="mt-8 text-3xl font-bold tracking-tight">
@@ -197,9 +198,9 @@ export default function PrivacyPage() {
                 <strong>Opt out of SMS.</strong> Reply <strong>STOP</strong>{' '}
                 to any FlirtPhone message at any time to stop receiving SMS.
                 See our{' '}
-                <a className="underline hover:text-stone-900" href="/terms">
+                <Link className="underline hover:text-stone-900" href="/terms">
                   SMS Terms &amp; Conditions
-                </a>
+                </Link>
                 .
               </li>
               <li>
