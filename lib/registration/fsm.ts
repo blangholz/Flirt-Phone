@@ -75,9 +75,9 @@ export type UserUpdate = Partial<
 // submitted on the Twilio campaign. Carrier-required elements: brand,
 // recurring-message disclosure, msg freq, msg&data rates, HELP, STOP.
 export const BARE_OPT_IN_REPLY =
-  "FlirtPhone: You've been added! You're opted in to recurring SMS — " +
-  'msg freq varies, msg&data rates may apply. Reply HELP for help, ' +
-  'STOP to cancel. Reply with your first name to join.';
+  "You've been added to the FlirtPhone! You're opted in to recurring " +
+  'SMS — msg freq varies, msg&data rates may apply. Reply HELP for ' +
+  'help, STOP to cancel. Reply with your first name to join.';
 
 // Bare opt-in path: user texted just FLIRT/JOIN/etc. They've consented;
 // drop them straight into the registration flow on the supplied community
