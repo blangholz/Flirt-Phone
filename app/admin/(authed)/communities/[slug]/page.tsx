@@ -1,6 +1,9 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import QRCode from 'qrcode';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { getServerEnv } from '@/lib/env';
+import { SharePanel } from './share-panel';
 
 export default async function CommunityDetail({
   params,
@@ -26,6 +29,19 @@ export default async function CommunityDetail({
       .select('id', { count: 'exact', head: true })
       .eq('community_id', community.id),
   ]);
+
+  const shareUrl = `${getServerEnv().NEXT_PUBLIC_APP_URL.replace(/\/$/, '')}/join/${community.slug}`;
+  const emailBlurb =
+    `${community.name} is on FlirtPhone — a voice-first way to ` +
+    `meet other members of the community.\n\n` +
+    `Tap the link from your phone to sign up: ${shareUrl}\n\n` +
+    `You'll answer a few quick questions and record a 30-second voice ` +
+    `intro. Reply STOP at any time to cancel.`;
+  const qrPngDataUrl = await QRCode.toDataURL(shareUrl, {
+    width: 512,
+    margin: 1,
+    color: { dark: '#1c1917', light: '#fefce8' }, // stone-900 on amber-50
+  });
 
   return (
     <div className="space-y-8">
@@ -56,6 +72,13 @@ export default async function CommunityDetail({
           subtitle={`${userCount ?? 0} registered`}
         />
       </div>
+
+      <SharePanel
+        communityName={community.name}
+        shareUrl={shareUrl}
+        emailBlurb={emailBlurb}
+        qrPngDataUrl={qrPngDataUrl}
+      />
 
       <p className="text-sm text-stone-500">
         Public Rolodex:{' '}
